@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>ReviseIt – Quizzes and flashcards</title>
+<style>
+:root{--bg:#f4f5fb;--card:#fff;--text:#161a2b;--muted:#667089;--accent:#5b5bf0;--accent2:#8b5cf6;--accent-t:#fff;--ok:#16a34a;--bad:#e11d48;--line:#e4e7f2;--shadow:0 6px 24px rgba(40,50,120,.08)}
+@media (prefers-color-scheme:dark){:root{--bg:#0f111a;--card:#191c29;--text:#eef0f8;--muted:#9aa2bb;--accent:#8b8bff;--accent2:#a78bfa;--accent-t:#0f111a;--ok:#4ade80;--bad:#fb7185;--line:#2a2f45;--shadow:0 6px 24px rgba(0,0,0,.35);color-scheme:dark}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:640px;margin:0 auto;padding:28px 18px 56px}
+h1{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin:0 0 4px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;width:fit-content}
+h2{font-size:1.2rem;font-weight:700;letter-spacing:-.01em;margin:0 0 10px}
+.sub{color:var(--muted);margin:0 0 22px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:14px;box-shadow:var(--shadow)}
+label{display:block;font-size:.85rem;font-weight:600;color:var(--muted);margin:16px 0 6px}
+select{width:100%;font:inherit;color:var(--text);background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:12px;transition:border-color .2s,box-shadow .2s}
+select:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 20%,transparent)}
+button{font:inherit;font-weight:600;border:0;border-radius:12px;padding:14px 16px;cursor:pointer;background:linear-gradient(90deg,var(--accent),var(--accent2));color:var(--accent-t);width:100%;margin-top:18px;transition:transform .15s,box-shadow .2s,opacity .2s}
+button:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 20px color-mix(in srgb,var(--accent) 35%,transparent)}
+button:active:not(:disabled){transform:scale(.98)}
+button.alt{background:var(--card);color:var(--text);border:1.5px solid var(--line)}
+button.alt:hover:not(:disabled){box-shadow:var(--shadow)}
+button:disabled{opacity:.45;cursor:default}
+.opt{display:block;width:100%;text-align:left;margin:10px 0 0;background:var(--bg);color:var(--text);border:1.5px solid var(--line);font-weight:500;padding:13px 14px;transition:transform .15s,border-color .2s,background .2s}
+.opt:hover:not(:disabled){transform:translateX(4px);box-shadow:none;border-color:var(--accent)}
+.opt.sel{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--bg));transform:translateX(4px)}
+.tag{display:inline-block;font-size:.72rem;font-weight:600;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border-radius:99px;padding:3px 11px;margin-bottom:8px}
+.bar{height:8px;background:var(--line);border-radius:9px;margin-bottom:18px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:9px;transition:width .5s cubic-bezier(.22,1,.36,1)}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+.score{font-size:3rem;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.fc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fc{border:1.5px dashed var(--muted);border-radius:14px;padding:14px;break-inside:avoid;font-size:.92rem;background:var(--bg);animation:up .45s cubic-bezier(.22,1,.36,1) both}
+.fc small{color:var(--muted);display:block;margin-bottom:6px}
+.fc .back{border-top:1px solid var(--line);margin-top:8px;padding-top:8px;color:var(--muted)}
+.hide{display:none!important}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+#setup,#summary,#weak,#fcbox,#again,main>div.noprint{animation:up .5s cubic-bezier(.22,1,.36,1) both}
+#quiz>*{animation:up .4s cubic-bezier(.22,1,.36,1) both}
+#quiz>.opt:nth-of-type(1){animation-delay:.05s}#quiz>.opt:nth-of-type(2){animation-delay:.1s}#quiz>.opt:nth-of-type(3){animation-delay:.15s}#quiz>.opt:nth-of-type(4){animation-delay:.2s}
+#review .card{animation:up .45s cubic-bezier(.22,1,.36,1) both}
+#review .card:nth-child(3){animation-delay:.08s}#review .card:nth-child(4){animation-delay:.16s}#review .card:nth-child(5){animation-delay:.24s}#review .card:nth-child(n+6){animation-delay:.3s}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:420px){.fc-grid{grid-template-columns:1fr}}
+@media print{body{background:#fff;color:#000}.noprint{display:none!important}main>*:not(#printarea){display:none!important}#printarea{display:block!important}.fc{border-color:#000;color:#000;animation:none;background:#fff}.fc small,.fc .back{color:#333}.fc-grid{grid-template-columns:1fr 1fr!important}}
+
+input{width:100%;font:inherit;color:var(--text);background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:12px}
+input:focus{outline:0;border-color:var(--accent)}
+.prof{display:flex;align-items:center;gap:14px}
+.av{font-size:2rem;width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 15%,var(--bg));flex:none}
+.pi{flex:1;min-width:0}.pi strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar.mini{height:6px;margin:6px 0 0}
+.streak{font-weight:700;text-align:center;flex:none}.streak small{display:block;font-weight:500;color:var(--muted);font-size:.7rem}
+.task{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.task:first-of-type{border-top:0}
+.task div{flex:1}.task small{color:var(--muted);display:block}
+.task button{width:auto;margin:0;padding:8px 14px;font-size:.85rem}
+.avs{display:flex;flex-wrap:wrap;gap:8px}
+.avs button{width:48px;height:48px;margin:0;padding:0;font-size:1.5rem;background:var(--bg);border:2px solid var(--line)}
+.avs button.on{border-color:var(--accent)}
+details summary{cursor:pointer;font-weight:700}
+.xpmsg{margin-top:10px;font-weight:600;color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+<div class="noprint"><h1>ReviseIt</h1><p class="sub">Quizzes with instant marking and printable flashcards.</p></div>
+
+<section id="home" class="noprint">
+<div class="card prof"><div id="avatar" class="av"></div><div class="pi"><strong id="pname"></strong><div id="plevel" class="sub" style="margin:0;font-size:.85rem"></div><div class="bar mini"><i id="pxp" style="width:0"></i></div><div class="sub" style="margin:4px 0 0;font-size:.72rem">Tap to edit your name and picture</div></div><div id="pstreak" class="streak"></div></div>
+<div class="card"><h2>Today’s tasks</h2><div id="tasks"></div></div>
+<details id="pdet" class="card"><summary>Profile and reminders</summary>
+<label for="uname">Username</label><input id="uname" maxlength="16" placeholder="Pick a nickname"><button id="usave" class="alt">Save username</button>
+<label>Profile picture</label><div id="avs" class="avs"></div>
+<label for="rtime">Daily reminder time</label><input id="rtime" type="time">
+<button id="remind" class="alt">Turn on reminders</button>
+<p id="rnote" class="sub" style="margin:10px 0 0;font-size:.82rem"></p>
+<p class="sub" style="margin:8px 0 0;font-size:.82rem">Your profile is saved on this device only. Please don’t use your real name or school.</p></details>
+</section>
+
+<section id="setup" class="card">
+<h2>Make a quiz</h2>
+<label for="subj">Subject</label>
+<select id="subj"></select>
+<label for="lvl">Level</label>
+<select id="lvl"><option value="KS3">KS3</option><option value="GCSE" selected>GCSE Foundation</option><option value="H">GCSE Higher</option><option value="A">A-level</option></select>
+<label for="n">Number of questions</label>
+<select id="n"><option>4</option><option selected>8</option><option>12</option><option>20</option></select>
+<p id="info" class="sub" style="margin:14px 0 0;font-size:.85rem"></p>
+<button id="go">Start quiz</button>
+</section>
+
+<section id="quiz" class="card hide"></section>
+
+<section id="results" class="hide">
+<div id="summary" class="card"></div>
+<div id="review"></div>
+<div id="weak" class="card"></div>
+<div id="fcbox" class="card"><h2>Your flashcards</h2><div id="fcgrid" class="fc-grid"></div><button id="print" class="noprint">Print flashcards</button></div>
+<button id="again" class="alt noprint">Make another quiz</button>
+</section>
+<div id="printarea" class="hide"><div id="printgrid" class="fc-grid"></div></div>
+</main>
+
+<script>
+/* QUESTION BANK. To add questions, copy a line and edit it.
+   Format: [topic, question, [4 options], index of correct option (0-3), short explanation] */
+var Q={
+Maths:{
+KS3:[
+['Fractions','What is 3/4 of 80?',['20','40','60','64'],2,'80 ÷ 4 = 20, then 20 × 3 = 60.'],
+['Algebra','Solve 2x + 5 = 17.',['x = 6','x = 11','x = 3','x = 12'],0,'Subtract 5 to get 2x = 12, then divide by 2 to get x = 6.'],
+['Area','What is the area of a triangle with base 10 cm and height 6 cm?',['60 cm²','30 cm²','16 cm²','32 cm²'],1,'Area = ½ × base × height = ½ × 10 × 6 = 30 cm².'],
+['Percentages','Increase 50 by 20%.',['60','70','10','52'],0,'20% of 50 is 10, so 50 + 10 = 60.']],
+GCSE:[
+['Algebra','Factorise x² + 5x + 6.',['(x + 2)(x + 3)','(x + 1)(x + 6)','(x − 2)(x − 3)','(x + 5)(x + 1)'],0,'Find two numbers that multiply to 6 and add to 5: 2 and 3.'],
+['Pythagoras','A right-angled triangle has shorter sides 6 cm and 8 cm. How long is the hypotenuse?',['10 cm','14 cm','12 cm','7 cm'],0,'6² + 8² = 36 + 64 = 100, and √100 = 10.'],
+['Probability','A fair dice is rolled twice. What is the probability of getting two 6s?',['1/36','1/12','1/6','2/6'],0,'Multiply the probabilities: 1/6 × 1/6 = 1/36.'],
+['Standard form','Write 4.5 × 10⁻³ as an ordinary number.',['0.0045','0.045','4500','0.00045'],0,'A power of −3 moves the decimal point 3 places to the left.']]},
+Biology:{
+KS3:[
+['Cells','Which part of a cell controls its activities?',['Nucleus','Cell wall','Vacuole','Chloroplast'],0,'The nucleus contains the genetic material and controls the cell.'],
+['Plants','Which gas do plants take in for photosynthesis?',['Oxygen','Carbon dioxide','Nitrogen','Hydrogen'],1,'Plants use carbon dioxide and water to make glucose.'],
+['Human body','Which organ pumps blood around the body?',['Lungs','Liver','Heart','Kidney'],2,'The heart is a muscular pump.'],
+['Nutrition','Which nutrient is needed mainly for growth and repair?',['Carbohydrate','Protein','Water','Fibre'],1,'Proteins are used to build new cells and repair tissue.']],
+GCSE:[
+['Enzymes','What happens to an enzyme if the temperature gets too high?',['It works faster and faster','It denatures because its active site changes shape','It turns into a carbohydrate','Nothing changes'],1,'High temperature changes the shape of the active site, so the substrate no longer fits.'],
+['Osmosis','What is osmosis?',['Water moving across a partially permeable membrane from a dilute to a more concentrated solution','Solute moving from high to low concentration','Water moving against a concentration gradient using energy','Gases moving through stomata'],0,'Osmosis is the net movement of water across a partially permeable membrane, from dilute to concentrated.'],
+['Inheritance','A person has the genotype Bb, where B is dominant. What does their phenotype show?',['The recessive trait','The dominant trait','Both traits mixed','Neither trait'],1,'The dominant allele is expressed when it is present.'],
+['Photosynthesis','Which is the word equation for photosynthesis?',['Carbon dioxide + water → glucose + oxygen','Glucose + oxygen → carbon dioxide + water','Oxygen + water → glucose + carbon dioxide','Carbon dioxide + glucose → water + oxygen'],0,'Photosynthesis uses light energy to turn carbon dioxide and water into glucose and oxygen.']]},
+Chemistry:{
+KS3:[
+['States of matter','What is the process of a gas turning into a liquid?',['Evaporation','Condensation','Melting','Freezing'],1,'Condensation happens when gas particles cool and move closer together.'],
+['Elements','What is the chemical symbol for sodium?',['S','So','Na','N'],2,'Na comes from the Latin name natrium.'],
+['Acids and alkalis','What is the pH of a neutral solution?',['0','7','14','1'],1,'pH 7 is neutral, below 7 is acidic and above 7 is alkaline.'],
+['Separating mixtures','Which method separates salt from salt water?',['Filtration','Evaporation','Using a magnet','Chromatography'],1,'Evaporating the water leaves the salt behind.']],
+GCSE:[
+['Bonding','What type of bonding is found in sodium chloride?',['Covalent','Ionic','Metallic','Hydrogen'],1,'Sodium gives an electron to chlorine, forming oppositely charged ions that attract.'],
+['Calculations','What is the relative formula mass of H₂O? (Ar: H = 1, O = 16)',['17','18','16','19'],1,'(2 × 1) + 16 = 18.'],
+['Rates of reaction','Which change would NOT increase the rate of a reaction?',['Higher temperature','Higher concentration','Using larger lumps of solid','Adding a catalyst'],2,'Larger lumps have less surface area, so there are fewer collisions.'],
+['Group 1','How does the reactivity of Group 1 metals change going down the group?',['It decreases','It increases','It stays the same','They stop reacting'],1,'The outer electron is further from the nucleus, so it is lost more easily.']]},
+Physics:{
+KS3:[
+['Forces','What is the unit of force?',['Joule','Newton','Watt','Pascal'],1,'Force is measured in newtons (N).'],
+['Energy','Which of these is a renewable energy resource?',['Coal','Oil','Wind','Gas'],2,'Wind will not run out because it is constantly replenished.'],
+['Speed','A car travels 100 m in 20 s. What is its speed?',['2 m/s','5 m/s','20 m/s','120 m/s'],1,'Speed = distance ÷ time = 100 ÷ 20 = 5 m/s.'],
+['Light','Where does light travel fastest?',['Water','Glass','A vacuum','Diamond'],2,'Light travels fastest in a vacuum and slows down in materials.']],
+GCSE:[
+['Electricity','A 12 V supply is connected across a 4 Ω resistor. What is the current?',['48 A','3 A','8 A','0.33 A'],1,'I = V ÷ R = 12 ÷ 4 = 3 A.'],
+['Forces and motion','A resultant force of 10 N acts on a 2 kg mass. What is its acceleration?',['20 m/s²','5 m/s²','12 m/s²','0.2 m/s²'],1,'a = F ÷ m = 10 ÷ 2 = 5 m/s².'],
+['Waves','Which equation links wave speed, frequency and wavelength?',['Speed = frequency × wavelength','Speed = frequency ÷ wavelength','Speed = wavelength ÷ frequency','Speed = amplitude × frequency'],0,'Wave speed = frequency × wavelength.'],
+['Energy','What is the kinetic energy of a 2 kg object moving at 3 m/s? (KE = ½mv²)',['6 J','9 J','12 J','18 J'],1,'½ × 2 × 3² = 9 J.']]},
+History:{
+KS3:[
+['Medieval','In which year was the Battle of Hastings?',['1066','1215','1415','1666'],0,'William of Normandy defeated King Harold in 1066.'],
+['Tudors','Which Tudor monarch broke away from the Catholic Church?',['Henry VII','Henry VIII','Edward VI','Elizabeth I'],1,'Henry VIII created the Church of England after the Pope refused to annul his marriage.'],
+['World War One','Which major war began in 1914?',['World War Two','World War One','English Civil War','Napoleonic Wars'],1,'World War One began in 1914 and ended in 1918.'],
+['Medieval','Which king signed the Magna Carta in 1215?',['King John','Henry VIII','Richard I','William I'],0,'King John was forced to sign it by his barons.']],
+GCSE:[
+['Germany 1919','Which treaty ended World War One for Germany in 1919?',['Treaty of Versailles','Treaty of Paris','Treaty of Rome','Treaty of Locarno'],0,'The Treaty of Versailles blamed Germany and imposed reparations.'],
+['Cold War','Which 1962 crisis was caused by Soviet missiles in Cuba?',['Berlin Blockade','Cuban Missile Crisis','Suez Crisis','Korean War'],1,'The USA and USSR came close to nuclear war in October 1962.'],
+['Weimar Germany','What helped cause German hyperinflation in 1923?',['Printing more money after the French occupied the Ruhr','The Wall Street Crash','Hitler becoming Chancellor','The Treaty of Locarno'],0,'Workers in the Ruhr went on strike and the government printed money to pay them, making it worthless.'],
+['World War Two','Who led the Soviet Union for most of World War Two?',['Lenin','Stalin','Khrushchev','Gorbachev'],1,'Joseph Stalin led the USSR from the 1920s until 1953.']]},
+Geography:{
+KS3:[
+['Rivers','What is the longest river in Africa?',['Nile','Amazon','Thames','Congo'],0,'The River Nile flows north through Egypt to the Mediterranean.'],
+['Earth structure','Which layer of the Earth is liquid?',['Crust','Mantle','Outer core','Inner core'],2,'The outer core is molten iron and nickel. The inner core is solid.'],
+['Countries','What is the capital city of Australia?',['Sydney','Melbourne','Canberra','Perth'],2,'Canberra was purpose-built as the capital.'],
+['Rocks','Which type of rock is formed when magma cools?',['Igneous','Sedimentary','Metamorphic','Limestone'],0,'Igneous rocks form from cooled magma or lava.']],
+GCSE:[
+['Tectonics','Which type of plate margin forms fold mountains like the Himalayas?',['Collision margin','Constructive margin','Conservative margin','Hot spot'],0,'Two continental plates push together and the crust folds upwards.'],
+['Rivers','Which erosion process involves rocks carried by a river scraping the bed and banks?',['Abrasion','Attrition','Hydraulic action','Solution'],0,'Abrasion is scraping. Attrition is rocks hitting each other and getting smaller.'],
+['Migration','Which of these is a push factor of migration?',['Better job opportunities','War or conflict','Good schools','Safer area'],1,'Push factors are the reasons people leave a place, such as war or conflict.'],
+['Climate change','Which greenhouse gas is most associated with burning fossil fuels?',['Oxygen','Carbon dioxide','Nitrogen','Argon'],1,'Burning fossil fuels releases carbon dioxide, which traps heat in the atmosphere.']]},
+English:{
+KS3:[
+['Language','Which of these is a simile?',['He was a lion in battle','He fought like a lion','The wind whispered','Time is money'],1,'A simile compares two things using “like” or “as”.'],
+['Word classes','Which word is a noun?',['Quickly','Happiness','Run','Beautiful'],1,'A noun names a thing, person, place or idea.'],
+['Vocabulary','What is a word with the opposite meaning of another called?',['Synonym','Antonym','Homophone','Acronym'],1,'Antonyms are opposites, for example hot and cold.'],
+['Punctuation','Which punctuation mark shows possession?',['Comma','Apostrophe','Colon','Hyphen'],1,'For example “the dog’s bone”.']],
+GCSE:[
+['Techniques','What is it called when human qualities are given to non-human things?',['Personification','Alliteration','Onomatopoeia','Hyperbole'],0,'For example “the wind whispered”.'],
+['Literature','Who wrote the play An Inspector Calls?',['J.B. Priestley','Charles Dickens','William Shakespeare','George Orwell'],0,'J.B. Priestley wrote it in 1945, set in 1912.'],
+['Techniques','What is the repetition of consonant sounds at the start of nearby words called?',['Assonance','Alliteration','Rhyme','Metaphor'],1,'For example “silver snakes slither”.'],
+['Punctuation','What is a semicolon used to do?',['Join two closely related main clauses','Introduce direct speech','Show possession','End a question'],0,'A semicolon links two sentences that could stand alone but are closely connected.']]}
+};
+
+/* H = GCSE Higher extras (Higher quizzes also include the GCSE Foundation questions above). A = A-level. */
+Q.Maths.H=[
+['Algebra','Solve x² − 7x + 12 = 0.',['x = 3 or x = 4','x = −3 or x = −4','x = 2 or x = 6','x = 1 or x = 12'],0,'Factorise to (x − 3)(x − 4) = 0.'],
+['Trigonometry','A right-angled triangle has hypotenuse 10 cm and an angle of 30°. How long is the side opposite that angle?',['5 cm','8.66 cm','10 cm','17.3 cm'],0,'Opposite = 10 × sin 30° = 5 cm.'],
+['Surds','Simplify √50.',['5√2','25√2','10√5','2√5'],0,'√50 = √25 × √2 = 5√2.'],
+['Sequences','What is the nth term of 5, 8, 11, 14, …?',['3n + 2','5n','n + 4','3n + 5'],0,'The common difference is 3, and 3 × 1 + 2 = 5.']];
+Q.Maths.A=[
+['Differentiation','What is the derivative of y = 3x⁴?',['12x³','3x³','12x⁴','4x³'],0,'Multiply by the power, then reduce the power by 1.'],
+['Integration','What is ∫2x dx?',['x² + c','2x² + c','x + c','2 + c'],0,'Raise the power by 1 and divide by the new power.'],
+['Logarithms','What is log₁₀ 1000?',['3','10','100','1'],0,'10³ = 1000.'],
+['Trigonometry','Which identity is always true?',['sin²x + cos²x = 1','sin x + cos x = 1','sin²x − cos²x = 1','tan x = cos x ÷ sin x'],0,'This is the Pythagorean identity.']];
+Q.Biology.H=[
+['Cell division','How many daughter cells does meiosis produce?',['4','2','1','8'],0,'Meiosis makes four genetically different gametes.'],
+['Homeostasis','Which hormone lowers blood glucose?',['Insulin','Glucagon','Adrenaline','Thyroxine'],0,'Insulin makes the liver store glucose as glycogen.'],
+['Respiration','What is made during anaerobic respiration in human muscles?',['Lactic acid','Ethanol','Oxygen','Glucose'],0,'Muscles make lactic acid when oxygen is short.'],
+['Ecology','What does a pyramid of biomass show?',['The mass of living material at each trophic level','The number of organisms','The energy lost as heat','The number of species'],0,'Biomass is the dry mass of organisms at each level.']];
+Q.Biology.A=[
+['Biological molecules','Which bond joins amino acids together in a protein?',['Peptide bond','Glycosidic bond','Ester bond','Hydrogen bond'],0,'A condensation reaction forms a peptide bond.'],
+['Protein synthesis','What is the role of mRNA?',['Carries a copy of a gene from the nucleus to a ribosome','Brings amino acids to the ribosome','Forms the ribosome','Unwinds the DNA'],0,'mRNA is the template the ribosome reads.'],
+['Respiration','Where does the Krebs cycle take place?',['Mitochondrial matrix','Cytoplasm','Thylakoid membrane','Nucleus'],0,'It happens in the matrix of the mitochondrion.'],
+['Genetics','Which is the Hardy–Weinberg equation?',['p² + 2pq + q² = 1','p + q = 2','p² − q² = 1','pq = 1'],0,'It links allele and genotype frequencies in a population.']];
+Q.Chemistry.H=[
+['Moles','How many moles are in 36 g of water? (Mr = 18)',['2','0.5','18','648'],0,'Moles = mass ÷ Mr = 36 ÷ 18 = 2.'],
+['Electrolysis','What forms at the cathode when molten lead bromide is electrolysed?',['Lead','Bromine','Oxygen','Hydrogen'],0,'Positive lead ions gain electrons at the cathode.'],
+['Equilibrium','If pressure is increased, a gas equilibrium shifts towards...',['the side with fewer gas molecules','the side with more gas molecules','the reactants always','neither side'],0,'The system opposes the change by reducing pressure.'],
+['Organic chemistry','What is the general formula of the alkanes?',['CₙH₂ₙ₊₂','CₙH₂ₙ','CₙHₙ','CₙH₂ₙ₋₂'],0,'For example, methane is CH₄ and ethane is C₂H₆.']];
+Q.Chemistry.A=[
+['Energetics','What does a negative ΔH mean?',['The reaction is exothermic','The reaction is endothermic','The reaction is at equilibrium','The reaction is slow'],0,'Energy is released to the surroundings.'],
+['Organic chemistry','What type of reaction turns an alkene into an alkane using hydrogen?',['Addition','Substitution','Elimination','Condensation'],0,'Hydrogen adds across the C=C double bond.'],
+['Equilibrium','How is Kc calculated?',['Products divided by reactants (concentrations)','Reactants divided by products','Products plus reactants','It is the rate constant'],0,'Each concentration is raised to the power of its coefficient.'],
+['Periodicity','Why does first ionisation energy generally increase across a period?',['Nuclear charge increases with similar shielding','Shielding increases','Atoms get larger','Electrons enter a new shell'],0,'The outer electron is held more strongly.']];
+Q.Physics.H=[
+['Momentum','What is the momentum of a 3 kg object moving at 4 m/s?',['12 kg m/s','7 kg m/s','1.33 kg m/s','48 kg m/s'],0,'p = mv = 3 × 4 = 12 kg m/s.'],
+['Radioactivity','What fraction of a radioactive sample remains after 2 half-lives?',['1/4','1/2','1/3','1/8'],0,'Each half-life halves the amount: ½ × ½ = ¼.'],
+['Electricity','Two 6 Ω resistors are in parallel. What is the total resistance?',['3 Ω','12 Ω','6 Ω','36 Ω'],0,'1/R = 1/6 + 1/6 = 1/3, so R = 3 Ω.'],
+['Energy','A 5 kg object is lifted 2 m. How much gravitational potential energy does it gain? (g = 10 N/kg)',['100 J','10 J','50 J','25 J'],0,'GPE = mgh = 5 × 10 × 2 = 100 J.']];
+Q.Physics.A=[
+['Mechanics','Ignoring air resistance, what happens to the horizontal velocity of a projectile?',['It stays constant','It increases','It decreases','It is zero'],0,'No horizontal force acts, so there is no horizontal acceleration.'],
+['Fields','Which law gives the force between two point charges?',['Coulomb’s law','Ohm’s law','Hooke’s law','Boyle’s law'],0,'The force depends on the charges and falls with 1/r².'],
+['Waves','What is needed for destructive interference?',['Waves in antiphase','Waves in phase','Waves of equal amplitude only','Waves of different speeds'],0,'A crest meets a trough, so they cancel.'],
+['Gases','In pV = nRT, what unit must the temperature be in?',['Kelvin','Celsius','Fahrenheit','Joules'],0,'The equation uses absolute temperature.']];
+Q.History.H=[
+['Medicine','Who discovered penicillin in 1928?',['Alexander Fleming','Louis Pasteur','Edward Jenner','Robert Koch'],0,'Fleming noticed that mould killed bacteria.'],
+['Cold War','What was the Marshall Plan?',['US economic aid to rebuild Western Europe','A Soviet military treaty','A plan to divide Berlin','A nuclear arms agreement'],0,'It also aimed to stop communism spreading.'],
+['Nazi Germany','What was the Night of the Long Knives in 1934?',['Hitler’s purge of the SA leadership','The burning of the Reichstag','Attacks on Jewish shops','The invasion of Poland'],0,'Hitler removed Ernst Röhm and other rivals.'],
+['Elizabethan England','What was the Spanish Armada of 1588?',['A fleet sent by Philip II to invade England','A Tudor trade expedition','A French naval force','Elizabeth’s fleet sent to Spain'],0,'The English navy and bad weather defeated it.']];
+Q.History.A=[
+['Russia','What helped trigger the February Revolution in Russia in 1917?',['Food shortages, war weariness and strikes in Petrograd','Lenin’s return to Russia','The Treaty of Brest-Litovsk','The Kornilov affair'],0,'Tsar Nicholas II abdicated within days.'],
+['Civil rights','Which 1954 US Supreme Court case ruled school segregation unconstitutional?',['Brown v Board of Education','Plessy v Ferguson','Roe v Wade','Miranda v Arizona'],0,'It rejected “separate but equal” in schools.'],
+['Cold War','What was the Truman Doctrine?',['US support for countries resisting communism','The treaty creating NATO','A plan to rebuild Germany','Soviet control of Eastern Europe'],0,'It began with aid to Greece and Turkey in 1947.'],
+['Tudors','Which 1534 act made Henry VIII head of the Church of England?',['Act of Supremacy','Act of Union','Act of Settlement','Habeas Corpus Act'],0,'It broke England’s ties with the Pope.']];
+Q.Geography.H=[
+['Tectonic hazards','Which scale measures earthquake magnitude by the energy released?',['Moment magnitude scale','Beaufort scale','Saffir-Simpson scale','Mohs scale'],0,'It has largely replaced the Richter scale.'],
+['Coasts','Which landform is left as a cliff retreats?',['Wave-cut platform','Spit','Delta','Meander'],0,'Undercutting and collapse leave a flat rocky platform.'],
+['Development','What does the Human Development Index combine?',['Income, education and life expectancy','GDP only','Population and area','Exports and imports'],0,'These three measure human development.'],
+['Urbanisation','What is counter-urbanisation?',['Movement from cities to rural areas','Movement from rural areas to cities','The growth of megacities','Rebuilding city centres'],0,'People leave cities for the countryside.']];
+Q.Geography.A=[
+['Carbon cycle','Which is the largest store of carbon on Earth?',['Sedimentary rocks','The atmosphere','Soils','Living things'],0,'Rocks hold far more carbon than any other store.'],
+['Globalisation','What is a TNC?',['Transnational corporation','Trade network community','Territorial national council','Tropical nature conservancy'],0,'A TNC is a company operating in several countries.'],
+['Plate tectonics','What does slab pull describe?',['Dense oceanic crust sinking at a subduction zone','Winds moving plates','Tides moving plates','Magnetic fields moving plates'],0,'The sinking plate drags the rest of the plate with it.'],
+['Population','What does the demographic transition model show?',['How birth and death rates change as a country develops','Rainfall change over time','Migration only','Changes in land use'],0,'Population growth rises, then levels off.']];
+Q.English.H=[
+['Literature','In Romeo and Juliet, which two families are in conflict?',['Montagues and Capulets','Lancastrians and Yorkists','Montagues and Medici','Capulets and Tudors'],0,'The feud sets up the tragedy.'],
+['Techniques','What is an oxymoron?',['Two contradictory terms together, such as bittersweet','A repeated sound','A question needing no answer','A sentence fragment'],0,'It combines opposites for effect.'],
+['Poetry','What is a 14-line poem called?',['Sonnet','Haiku','Limerick','Ballad'],0,'Shakespeare wrote many sonnets.'],
+['Language','What does pathetic fallacy mean?',['Weather reflecting the mood of a scene','A word that sounds like its meaning','A character’s fatal flaw','A logical mistake'],0,'For example, a storm during a tense moment.']];
+Q.English.A=[
+['Literary theory','Which Greek philosopher described the tragic flaw, hamartia?',['Aristotle','Plato','Chaucer','Homer'],0,'He discussed it in the Poetics.'],
+['Narrative','What is an unreliable narrator?',['A narrator whose account cannot be fully trusted','A narrator using the first person','A narrator who is the author','A narrator with no name'],0,'The reader has to question what they are told.'],
+['Narrative','What is free indirect discourse?',['Narration that blends the narrator’s voice with a character’s thoughts','Direct quotes in dialogue','A summary of the plot','Poetry without rhyme'],0,'Jane Austen used it often.'],
+['Literary theory','Which approach focuses on gender roles and power?',['Feminist criticism','Formalism','Structuralism','Biographical criticism'],0,'It examines how gender is represented.']];
+
+
+/* Extra questions (2 more per subject per level) */
+Q.Maths.KS3.push(['Ratio','Share £60 in the ratio 1:2.',['£20 and £40','£30 and £30','£10 and £50','£15 and £45'],0,'There are 3 parts, so 1 part = £20.'],['Angles','What do the angles in a triangle add up to?',['180°','90°','360°','270°'],0,'Triangle angles always sum to 180°.']);
+Q.Maths.GCSE.push(['Simplifying','Simplify 3x + 2y + 4x − y.',['7x + y','7x + 3y','12xy','7x − y'],0,'Collect like terms: 3x + 4x = 7x and 2y − y = y.'],['Averages','What is the mean of 4, 7, 9 and 12?',['8','7','9','32'],0,'The total is 32, and 32 ÷ 4 = 8.']);
+Q.Maths.H.push(['Circles','What is the area of a circle with radius 5 cm, in terms of π?',['25π cm²','10π cm²','5π cm²','50π cm²'],0,'Area = πr² = 25π.'],['Vectors','If a = (2, 3) and b = (1, −4), what is a + b?',['(3, −1)','(1, 7)','(3, 7)','(2, −12)'],0,'Add each component separately.']);
+Q.Maths.A.push(['Binomial expansion','What is the coefficient of x² in the expansion of (1 + x)⁴?',['6','4','1','12'],0,'The coefficient is ⁴C₂ = 6.'],['Differentiation','What is the gradient of y = x² at x = 3?',['6','9','3','2'],0,'dy/dx = 2x, so at x = 3 the gradient is 6.']);
+Q.Biology.KS3.push(['Reproduction','What is a fertilised egg cell called?',['Zygote','Gamete','Spore','Embryo'],0,'A zygote forms when a sperm fuses with an egg.'],['Ecosystems','In a food chain, what is a producer?',['An organism that makes its own food','An animal that eats plants','An organism that eats dead matter','A top predator'],0,'Plants make food by photosynthesis.']);
+Q.Biology.GCSE.push(['Cells','Which structure is the site of protein synthesis?',['Ribosome','Mitochondrion','Nucleus','Cell membrane'],0,'Ribosomes join amino acids to make proteins.'],['Disease','What type of organism causes malaria?',['A protist','A virus','A bacterium','A fungus'],0,'Malaria is caused by a protist spread by mosquitoes.']);
+Q.Biology.H.push(['Nervous system','What is the gap between two neurones called?',['Synapse','Axon','Receptor','Effector'],0,'Chemicals cross the synapse to pass the signal on.'],['Evolution','What does natural selection favour?',['Features that help organisms survive and reproduce','The largest organisms','Harmful mutations','Organisms that avoid reproducing'],0,'Helpful features are passed on more often.']);
+Q.Biology.A.push(['Immunology','Which cells produce antibodies?',['Plasma cells (activated B cells)','Phagocytes','Red blood cells','Platelets'],0,'Plasma cells are B lymphocytes that make antibodies.'],['Cell transport','What provides the energy for active transport?',['ATP','Osmosis','Diffusion','Light'],0,'Active transport moves substances against their gradient using ATP.']);
+Q.Chemistry.KS3.push(['Atoms','Which particle has a positive charge?',['Proton','Electron','Neutron','Molecule'],0,'Protons are positive, electrons negative and neutrons neutral.'],['Reactions','What is made when an acid reacts with an alkali?',['Salt and water','Hydrogen and a salt','Oxygen and water','Carbon dioxide only'],0,'This is a neutralisation reaction.']);
+Q.Chemistry.GCSE.push(['Atomic structure','How many electrons can fit in the first shell?',['2','8','1','18'],0,'The first shell holds a maximum of 2 electrons.'],['Metals','Which gas is made when a metal reacts with an acid?',['Hydrogen','Oxygen','Carbon dioxide','Chlorine'],0,'Metal + acid → salt + hydrogen.']);
+Q.Chemistry.H.push(['Concentration','What is the concentration, in mol/dm³, of 0.5 mol dissolved in 2 dm³?',['0.25','1','4','2.5'],0,'0.5 ÷ 2 = 0.25 mol/dm³.'],['Atom economy','What does a high atom economy mean?',['Little waste is made','The reaction is fast','A high temperature is used','A lot of energy is released'],0,'Most reactant atoms end up in the useful product.']);
+Q.Chemistry.A.push(['Bonding','What shape is a molecule with 4 bonding pairs and no lone pairs?',['Tetrahedral','Trigonal planar','Linear','Octahedral'],0,'For example methane, with bond angles of 109.5°.'],['Redox','What is oxidation?',['Loss of electrons','Gain of electrons','Gain of protons','Loss of neutrons'],0,'Remember OIL RIG: Oxidation Is Loss.']);
+Q.Physics.KS3.push(['Space','Which planet is closest to the Sun?',['Mercury','Venus','Earth','Mars'],0,'Mercury is the innermost planet.'],['Electricity','What does an ammeter measure?',['Current','Voltage','Resistance','Power'],0,'Current is measured in amps.']);
+Q.Physics.GCSE.push(['Density','A material has a mass of 200 g and a volume of 50 cm³. What is its density?',['4 g/cm³','0.25 g/cm³','10 g/cm³','150 g/cm³'],0,'Density = mass ÷ volume = 200 ÷ 50 = 4 g/cm³.'],['Waves','Which type of wave is sound?',['Longitudinal','Transverse','Electromagnetic','Gamma'],0,'The particles vibrate parallel to the direction of travel.']);
+Q.Physics.H.push(['Pressure','A force of 100 N acts on an area of 0.5 m². What is the pressure?',['200 Pa','50 Pa','100 Pa','0.005 Pa'],0,'Pressure = force ÷ area = 100 ÷ 0.5 = 200 Pa.'],['Magnetism','Which rule gives the direction of the force on a current in a magnetic field?',['Fleming’s left-hand rule','Fleming’s right-hand rule','Newton’s first law','Snell’s law'],0,'Thumb is force, first finger is field and second finger is current.']);
+Q.Physics.A.push(['Capacitors','What is the unit of capacitance?',['Farad','Henry','Tesla','Coulomb'],0,'Capacitance = charge ÷ potential difference, measured in farads.'],['Quantum physics','What does the photoelectric effect show about light?',['It behaves as particles (photons)','It is purely a wave','It has no energy','It travels faster than c'],0,'Electrons are only emitted above a threshold frequency.']);
+Q.History.KS3.push(['Victorians','Which queen ruled for most of the 19th century?',['Victoria','Elizabeth I','Anne','Mary I'],0,'Queen Victoria reigned from 1837 to 1901.'],['Romans','Which emperor’s army began the Roman conquest of Britain in 43 AD?',['Claudius','Augustus','Nero','Hadrian'],0,'Claudius sent the invasion force in 43 AD.']);
+Q.History.GCSE.push(['World War Two','What was the German bombing campaign on British cities in 1940–41 called?',['The Blitz','Operation Overlord','D-Day','Dunkirk'],0,'The Blitz targeted London and many other cities.'],['Industrial Revolution','Which improvement did James Watt make to the steam engine?',['A separate condenser','The spinning jenny','The flying shuttle','The railway locomotive'],0,'The separate condenser made steam engines far more efficient.']);
+Q.History.H.push(['Vietnam','Which US president sent large numbers of combat troops to Vietnam from 1965?',['Lyndon B. Johnson','Eisenhower','Nixon','Kennedy'],0,'Johnson escalated the war after the Gulf of Tonkin incident.'],['Suffragettes','Which organisation did Emmeline Pankhurst found in 1903?',['WSPU','NUWSS','The Labour Party','The TUC'],0,'The Women’s Social and Political Union used militant tactics.']);
+Q.History.A.push(['Weimar and Nazi Germany','Which 1923 event was Hitler’s failed attempt to seize power?',['The Munich Putsch','The Reichstag Fire','The Kapp Putsch','The Night of the Long Knives'],0,'It led to his trial and the writing of Mein Kampf.'],['Reformation','Who wrote the 95 Theses in 1517?',['Martin Luther','John Calvin','Thomas More','Erasmus'],0,'Luther challenged the Church’s sale of indulgences.']);
+Q.Geography.KS3.push(['Weather','Which instrument measures rainfall?',['Rain gauge','Barometer','Anemometer','Thermometer'],0,'A rain gauge collects rainwater.'],['Map skills','What does a contour line show?',['Height of the land','Rainfall','Population','Roads'],0,'Contour lines close together mean steep land.']);
+Q.Geography.GCSE.push(['Weather','Which type of rainfall happens when air is forced over hills?',['Relief rainfall','Convectional rainfall','Frontal rainfall','Acid rain'],0,'Moist air rises over high ground, cools and condenses.'],['Ecosystems','Which biome has the highest biodiversity?',['Tropical rainforest','Tundra','Desert','Taiga'],0,'Rainforests are warm and wet all year round.']);
+Q.Geography.H.push(['Rivers','How does a meander develop?',['Erosion on the outside bend and deposition on the inside','Deposition on the outside bend only','Only vertical erosion','Wind erosion'],0,'This makes the bend gradually more curved.'],['Flooding','What does a hydrograph show?',['River discharge over time after rainfall','Annual temperatures','Soil types','Cloud cover'],0,'It plots discharge against time.']);
+Q.Geography.A.push(['Hazards','What is liquefaction?',['Saturated soil behaving like a liquid during an earthquake','Lava turning into liquid','Polar ice melting','Rock dissolving in acid'],0,'Buildings can sink or tilt as the ground loses strength.'],['Sustainability','What is the term for meeting present needs without harming future generations?',['Sustainable development','Globalisation','Urbanisation','Deforestation'],0,'It balances economic, social and environmental needs.']);
+Q.English.KS3.push(['Writing','What is a paragraph used for?',['Grouping sentences about one idea','Showing speech','Starting a poem','Ending a sentence'],0,'A new paragraph usually marks a new idea.'],['Grammar','Which word is a verb?',['Jump','Table','Happy','Slowly'],0,'A verb is a doing or being word.']);
+Q.English.GCSE.push(['Poetry','What is a stanza?',['A group of lines in a poem','A rhyme scheme','A line break','A type of metaphor'],0,'Stanzas work like paragraphs in a poem.'],['Techniques','What does onomatopoeia mean?',['A word that sounds like its meaning','A comparison using “like”','Exaggeration','Repeating a sound'],0,'For example “buzz” or “crash”.']);
+Q.English.H.push(['Literature','Who wrote A Christmas Carol?',['Charles Dickens','Jane Austen','Thomas Hardy','Robert Louis Stevenson'],0,'Dickens published it in 1843.'],['Language','What is a rhetorical question?',['A question asked for effect, not an answer','A question with only one answer','A question in a poem','A question in a play'],0,'It makes the audience think.']);
+Q.English.A.push(['Literary theory','What is intertextuality?',['Links between one text and others','A text’s word count','A text’s rhyme scheme','Analysing a single word'],0,'Texts echo or refer to other texts.'],['Form','What is a Bildungsroman?',['A novel about a character growing up','A war poem','A comedy play','A diary entry'],0,'It follows a character’s development into adulthood.']);
+
+
+/* Batch 3: 3 more per subject per level */
+Q.Maths.KS3.push(['Decimals','What is 0.6 × 0.5?',['0.3','3','0.03','0.11'],0,'6 × 5 = 30, and two decimal places gives 0.30.'],['Negative numbers','What is −3 + 8?',['5','−5','11','−11'],0,'Start at −3 and move up 8.'],['Perimeter','A rectangle is 7 cm by 4 cm. What is its perimeter?',['22 cm','28 cm','11 cm','18 cm'],0,'2 × (7 + 4) = 22 cm.']);
+Q.Maths.GCSE.push(['Fractions','What is 1/2 + 1/3?',['5/6','2/5','2/6','1/5'],0,'3/6 + 2/6 = 5/6.'],['Rounding','Round 4.682 to 1 decimal place.',['4.7','4.6','4.68','5'],0,'The next digit is 8, so round up.'],['Equations','Solve 3x = 21.',['x = 7','x = 18','x = 63','x = 24'],0,'Divide both sides by 3.']);
+Q.Maths.H.push(['Indices','Simplify (x³)⁴.',['x¹²','x⁷','x⁶','x⁸'],0,'Multiply the powers: 3 × 4 = 12.'],['Simultaneous equations','If x + y = 10 and x − y = 2, what is x?',['6','4','8','12'],0,'Add the equations: 2x = 12.'],['Compound interest','£100 earns 10% compound interest for 2 years. What is the total?',['£121','£120','£110','£122'],0,'100 × 1.1 × 1.1 = 121.']);
+Q.Maths.A.push(['Series','What is the sum of the first 10 positive integers?',['55','45','50','100'],0,'n(n + 1) ÷ 2 = 10 × 11 ÷ 2 = 55.'],['Exponentials','What is the derivative of eˣ?',['eˣ','xeˣ⁻¹','e','1/x'],0,'eˣ is its own derivative.'],['Vectors','What is the magnitude of the vector (3, 4)?',['5','7','25','12'],0,'√(3² + 4²) = 5.']);
+Q.Biology.KS3.push(['Skeleton','What attaches muscle to bone?',['Tendons','Ligaments','Cartilage','Veins'],0,'Ligaments join bone to bone.'],['Respiration','Which gas is released by respiration?',['Carbon dioxide','Nitrogen','Helium','Methane'],0,'Respiration releases carbon dioxide and water.'],['Microscopes','Which part of a microscope holds the slide?',['Stage','Eyepiece','Lamp','Objective lens'],0,'The slide sits on the stage.']);
+Q.Biology.GCSE.push(['Digestion','Which enzyme breaks down starch?',['Amylase','Protease','Lipase','Catalase'],0,'Amylase breaks starch into sugars.'],['Blood','Which blood cells carry oxygen?',['Red blood cells','White blood cells','Platelets','Plasma'],0,'Haemoglobin binds oxygen.'],['Diffusion','What is diffusion?',['Movement of particles from high to low concentration','Movement of water only','Movement using energy','Movement of whole cells'],0,'It is passive and needs no energy.']);
+Q.Biology.H.push(['Hormones','Which gland is called the master gland?',['Pituitary','Thyroid','Adrenal','Pancreas'],0,'The pituitary controls other glands.'],['DNA','Which base pairs with adenine in DNA?',['Thymine','Cytosine','Guanine','Uracil'],0,'A pairs with T, and C pairs with G.'],['Stem cells','What is special about stem cells?',['They can differentiate into other cell types','They divide only once','They have no nucleus','They are always red'],0,'They can become specialised cells.']);
+Q.Biology.A.push(['Enzymes','What does a competitive inhibitor do?',['Binds to the active site','Binds away from the active site','Breaks the substrate','Raises the temperature'],0,'It blocks the substrate from binding.'],['Photosynthesis','Where do the light-dependent reactions occur?',['Thylakoid membranes','Stroma','Mitochondria','Nucleus'],0,'They occur in the thylakoid membranes of chloroplasts.'],['Plant transport','What does xylem transport?',['Water and minerals','Sugars','Starch','Light'],0,'Phloem transports sugars.']);
+Q.Chemistry.KS3.push(['Elements','What is the symbol for iron?',['Fe','Ir','I','Fi'],0,'Fe comes from the Latin ferrum.'],['Mixtures','Which method separates different coloured inks?',['Chromatography','Filtration','Distillation','Evaporation'],0,'Colours travel at different speeds on paper.'],['Air','Which gas makes up most of the air?',['Nitrogen','Oxygen','Carbon dioxide','Argon'],0,'About 78% of air is nitrogen.']);
+Q.Chemistry.GCSE.push(['Compounds','Which of these is a compound?',['Water','Oxygen','Iron','Helium'],0,'Water has hydrogen and oxygen bonded.'],['Reactivity','Which metal is the most reactive?',['Potassium','Copper','Iron','Zinc'],0,'Potassium is high in the reactivity series.'],['Alkalis','Which ion do alkalis produce in water?',['OH⁻','H⁺','Cl⁻','Na⁺'],0,'Hydroxide ions make a solution alkaline.']);
+Q.Chemistry.H.push(['Titration','What is a titration used to find?',['The concentration of a solution','A boiling point','The mass of a gas','The density of a metal'],0,'A known solution reacts with an unknown one.'],['Alkenes','Which test shows that a compound is an alkene?',['It decolourises bromine water','It turns limewater cloudy','It relights a glowing splint','It turns litmus red'],0,'Alkenes react with bromine.'],['Reversible reactions','What does the symbol ⇌ mean?',['A reversible reaction','An exothermic reaction','A catalysed reaction','A slow reaction'],0,'The reaction can go both ways.']);
+Q.Chemistry.A.push(['Kinetics','What does a catalyst do?',['Lowers the activation energy','Raises the activation energy','Changes ΔH','Increases yield at equilibrium'],0,'It provides an alternative route.'],['Intermolecular forces','Which substance has the strongest intermolecular forces?',['Water','Methane','Hydrogen','Helium'],0,'Water has hydrogen bonding.'],['Acids','What is the pH of 0.1 mol/dm³ HCl?',['1','0.1','7','13'],0,'pH = −log₁₀(0.1) = 1.']);
+Q.Physics.KS3.push(['Sound','What unit is used for frequency?',['Hertz','Decibel','Newton','Metre'],0,'One hertz is one vibration per second.'],['Energy','What type of energy does a moving object have?',['Kinetic','Chemical','Nuclear','Elastic'],0,'Kinetic energy depends on mass and speed.'],['Magnets','What happens when two north poles are brought together?',['They repel','They attract','Nothing','They merge'],0,'Like poles repel.']);
+Q.Physics.GCSE.push(['Electricity','What is the unit of resistance?',['Ohm','Volt','Amp','Watt'],0,'Resistance is measured in ohms (Ω).'],['Power','A 100 W lamp runs for 10 s. How much energy does it transfer?',['1000 J','10 J','110 J','100 J'],0,'E = P × t = 100 × 10.'],['Radiation','Which type of radiation is the most ionising?',['Alpha','Beta','Gamma','Radio'],0,'Alpha is very ionising but weakly penetrating.']);
+Q.Physics.H.push(['Electromagnetic waves','Which list is in order of decreasing wavelength?',['Radio, microwave, visible, gamma','Gamma, visible, microwave, radio','Visible, radio, gamma, microwave','Microwave, gamma, radio, visible'],0,'Radio waves are longest and gamma rays shortest.'],['Circuits','In a series circuit, what is true of the current?',['It is the same everywhere','It splits at each component','It is zero','It increases'],0,'Current is the same through every component.'],['Space','Which force keeps planets in orbit around the Sun?',['Gravity','Magnetism','Friction','Air resistance'],0,'Gravity pulls planets towards the Sun.']);
+Q.Physics.A.push(['Oscillations','What is the period of a wave with frequency 50 Hz?',['0.02 s','50 s','0.5 s','2 s'],0,'T = 1 ÷ f = 1 ÷ 50.'],['Nuclear physics','What is the SI unit of activity of a radioactive source?',['Becquerel','Sievert','Gray','Joule'],0,'One becquerel is one decay per second.'],['Circular motion','What provides the centripetal force on a planet orbiting the Sun?',['Gravity','Friction','Tension','Magnetism'],0,'Gravitational attraction pulls the planet inwards.']);
+Q.History.KS3.push(['Medieval','What was the feudal system?',['Land given in return for loyalty and service','Trade between countries','A type of castle','A tax on food'],0,'Kings gave land to barons who owed service.'],['Black Death','In which year did the Black Death reach England?',['1348','1066','1666','1215'],0,'It arrived in 1348.'],['Stuarts','In which year was the Great Fire of London?',['1666','1066','1605','1750'],0,'It began in a bakery on Pudding Lane.']);
+Q.History.GCSE.push(['World War One','What was trench warfare?',['Fighting from dug-in defensive lines','Fighting at sea','Fighting in the air','Fighting in cities'],0,'Trenches led to stalemate on the Western Front.'],['Cold War','Which wall divided a city from 1961?',['The Berlin Wall','The Great Wall','Hadrian’s Wall','The Wailing Wall'],0,'It divided East and West Berlin.'],['Nazi Germany','What was Kristallnacht?',['A 1938 night of attacks on Jewish people','A Nazi election win','A Berlin airlift','A military parade'],0,'Synagogues and Jewish businesses were attacked.']);
+Q.History.H.push(['Medicine','Who provided evidence for germ theory in the 1860s?',['Louis Pasteur','Hippocrates','Galen','Edward Jenner'],0,'Pasteur showed that germs cause decay and disease.'],['Elizabethan England','Which queen was executed in 1587?',['Mary, Queen of Scots','Anne Boleyn','Catherine Howard','Lady Jane Grey'],0,'Elizabeth I approved her execution after the Babington Plot.'],['Civil rights','Who gave the “I have a dream” speech in 1963?',['Martin Luther King Jr.','Malcolm X','Rosa Parks','Barack Obama'],0,'He spoke at the March on Washington.']);
+Q.History.A.push(['French Revolution','What event began the French Revolution in 1789?',['The storming of the Bastille','The execution of Louis XVI','The Reign of Terror','Napoleon’s coup'],0,'Parisians stormed the Bastille on 14 July.'],['Cold War','Why was NATO formed in 1949?',['For collective defence against the USSR','To rebuild Germany','To fight in Korea','To trade with Asia'],0,'Members agreed to defend each other.'],['Victorian Britain','What did the 1834 Poor Law Amendment Act introduce?',['Workhouses','Free healthcare','Votes for women','Factory laws'],0,'It aimed to discourage relief by making workhouses harsh.']);
+Q.Geography.KS3.push(['Continents','Which is the largest continent?',['Asia','Africa','Europe','Antarctica'],0,'Asia is largest by area and population.'],['Weather','What is water falling from clouds called?',['Precipitation','Evaporation','Condensation','Transpiration'],0,'Rain, snow and hail are precipitation.'],['Map skills','What does a map scale show?',['How map distances compare with real distances','The height of land','The weather','The population'],0,'With 1:50,000, 1 cm on the map is 500 m.']);
+Q.Geography.GCSE.push(['Tectonics','What is the focus of an earthquake?',['The point underground where it starts','The point on the surface above it','A volcano vent','The plate margin'],0,'The epicentre is the point directly above it.'],['Coasts','What is longshore drift?',['Movement of sediment along a coast','Rock falling from a cliff','Waves eroding a cliff base','Tides going out'],0,'Waves hit at an angle and move sediment along the shore.'],['Energy','Which of these is a renewable energy source?',['Solar','Coal','Gas','Oil'],0,'Solar energy will not run out.']);
+Q.Geography.H.push(['Deserts','What can cause desertification?',['Overgrazing and drought','Heavy rainfall','Building dams','Planting forests'],0,'Land becomes degraded and turns into desert.'],['Population','What does the dependency ratio compare?',['Dependants with working-age people','Births with deaths','Migrants with locals','Urban with rural people'],0,'It compares children and elderly people with those of working age.'],['Ecosystems','What is a food web?',['Interlinked food chains','A single food chain','A map of farms','A type of habitat'],0,'It shows feeding relationships in an ecosystem.']);
+Q.Geography.A.push(['Glaciation','What forms a U-shaped valley?',['Glacial erosion','River erosion','Wind erosion','Deposition'],0,'Glaciers widen and deepen valleys.'],['Migration','What is a pull factor?',['A reason that attracts people to a place','A reason that forces people out','A government law','A type of climate'],0,'For example, job opportunities.'],['Climate','What is albedo?',['The reflectivity of a surface','The heat of a surface','The amount of rainfall','Wind speed'],0,'Ice has a high albedo and reflects sunlight.']);
+Q.English.KS3.push(['Punctuation','Which punctuation mark ends a question?',['?','.','!',','],0,'A question mark ends a question.'],['Spelling','Which is spelt correctly?',['Separate','Seperate','Separete','Sepurate'],0,'There is “a rat” in separate.'],['Poetry','What is rhyme?',['Words with matching end sounds','Words with the same spelling','A type of noun','A full sentence'],0,'For example, “cat” and “hat”.']);
+Q.English.GCSE.push(['Writing','What is a topic sentence?',['The sentence that introduces a paragraph’s main idea','The last sentence of an essay','A quotation','A title'],0,'It tells the reader what the paragraph is about.'],['Techniques','What does a metaphor do?',['Says one thing is another','Compares using “like”','Repeats a sound','Exaggerates'],0,'For example, “time is a thief”.'],['Shakespeare','Which play includes the line “To be, or not to be”?',['Hamlet','Macbeth','Othello','King Lear'],0,'Hamlet says it in a famous soliloquy.']);
+Q.English.H.push(['Literature','Who wrote Lord of the Flies?',['William Golding','George Orwell','Aldous Huxley','Harper Lee'],0,'Golding published it in 1954.'],['Language','What is a sarcastic tone?',['Mocking or ironic','Joyful','Formal','Neutral'],0,'The meaning is the opposite of the words used.'],['Structure','What is a flashback?',['A scene set earlier than the main narrative','A prediction','A summary','A soliloquy'],0,'It reveals past events.']);
+Q.English.A.push(['Drama','What is dramatic irony?',['The audience knows more than the characters','The characters know more than the audience','A twist ending','A comic scene'],0,'It builds tension.'],['Poetry','What is enjambment?',['A sentence running over a line break','A pause in the middle of a line','A rhyme at the end of a line','A repeated line'],0,'It creates flow and momentum.'],['Literary periods','Which literary movement is Wordsworth associated with?',['Romanticism','Modernism','Victorian realism','The Renaissance'],0,'He helped begin Romantic poetry.']);
+
+
+/* Batch 4 */
+Q.Maths.KS3.push(['Powers','What is 5²?',['25','10','7','52'],0,'5² means 5 × 5.']);
+Q.Maths.GCSE.push(['Percentages','What is 15% of 200?',['30','15','20','150'],0,'10% is 20 and 5% is 10, so 30.']);
+Q.Maths.H.push(['Quadratics','What is the discriminant of x² + 4x + 4?',['0','16','8','4'],0,'b² − 4ac = 16 − 16 = 0.']);
+Q.Maths.A.push(['Integration','What is ∫3x² dx?',['x³ + c','3x³ + c','6x + c','x² + c'],0,'Raise the power to 3 and divide by 3.']);
+Q.Biology.KS3.push(['Photosynthesis','Which pigment makes plants green?',['Chlorophyll','Haemoglobin','Melanin','Keratin'],0,'Chlorophyll absorbs light for photosynthesis.']);
+Q.Biology.GCSE.push(['Circulation','How many chambers does the human heart have?',['4','2','3','6'],0,'It has two atria and two ventricles.']);
+Q.Biology.H.push(['Variation','What is a mutation?',['A change in the DNA sequence','A type of cell','A kind of protein','A chromosome pair'],0,'Mutations can change the proteins made.']);
+Q.Biology.A.push(['Ecology','What is a keystone species?',['One with a large effect on its ecosystem','The most numerous species','The largest species','An extinct species'],0,'Removing it changes the whole community.']);
+Q.Chemistry.KS3.push(['Compounds','What is the chemical formula of water?',['H₂O','HO₂','H₂O₂','OH'],0,'Two hydrogen atoms and one oxygen atom.']);
+Q.Chemistry.GCSE.push(['Gas tests','What is the test for carbon dioxide?',['It turns limewater cloudy','It relights a glowing splint','It burns with a squeaky pop','It bleaches litmus'],0,'Carbon dioxide reacts with limewater.']);
+Q.Chemistry.H.push(['Structure','What type of structure does diamond have?',['Giant covalent','Giant ionic','Simple molecular','Metallic'],0,'Each carbon atom bonds to four others.']);
+Q.Chemistry.A.push(['Organic chemistry','What is the functional group of an alcohol?',['−OH','−COOH','C=O','−NH₂'],0,'Alcohols contain a hydroxyl group.']);
+Q.Physics.KS3.push(['Light','What happens to light when it hits a mirror?',['It reflects','It refracts','It is fully absorbed','It speeds up'],0,'The angle of incidence equals the angle of reflection.']);
+Q.Physics.GCSE.push(['Motion','What is the equation for speed?',['Distance ÷ time','Distance × time','Time ÷ distance','Mass × velocity'],0,'Speed = distance ÷ time.']);
+Q.Physics.H.push(['Waves','What is refraction?',['A change in direction as a wave changes speed','A wave bouncing off a surface','A wave spreading through a gap','A wave being absorbed'],0,'It happens when a wave enters a different medium.']);
+Q.Physics.A.push(['Electricity','What is the SI unit of charge?',['Coulomb','Ampere','Volt','Farad'],0,'One coulomb is one ampere-second.']);
+Q.History.KS3.push(['Tudors','Which monarch reigned when the Spanish Armada was defeated in 1588?',['Elizabeth I','Mary I','Henry VII','Victoria'],0,'Elizabeth I was queen in 1588.']);
+Q.History.GCSE.push(['Cold War','What was the Soviet-led military alliance formed in 1955?',['The Warsaw Pact','The EU','The League of Nations','The Axis'],0,'It was the Eastern bloc’s answer to NATO.']);
+Q.History.H.push(['Nazi Germany','What was the Enabling Act of 1933?',['It let Hitler make laws without the Reichstag','It banned all trade unions','It created the SS','It ended the war'],0,'It effectively made Hitler a dictator.']);
+Q.History.A.push(['Russia','The Bolshevik slogan “Peace, Land and Bread” mainly aimed at winning over?',['Soldiers, peasants and workers in 1917','The nobility','Foreign governments','The Church'],0,'It promised an end to war and food for the people.']);
+Q.Geography.KS3.push(['Rivers','What is the start of a river called?',['Source','Mouth','Tributary','Meander'],0,'The mouth is where a river ends.']);
+Q.Geography.GCSE.push(['Latitude','Which line of latitude is at 0°?',['The Equator','The Tropic of Cancer','The Arctic Circle','The Prime Meridian'],0,'The Prime Meridian is a line of longitude.']);
+Q.Geography.H.push(['Volcanoes','Which type of volcano has gentle slopes and runny lava?',['Shield volcano','Composite volcano','Cinder cone','Caldera'],0,'Shield volcanoes are common at constructive margins.']);
+Q.Geography.A.push(['Rivers','What does the Hjulström curve show?',['How flow speed relates to erosion, transport and deposition','Annual rainfall','Population growth','Soil layers'],0,'Particle size and velocity decide what happens to sediment.']);
+Q.English.KS3.push(['Grammar','Which word is an adjective?',['Brave','Run','Quickly','London'],0,'An adjective describes a noun.']);
+Q.English.GCSE.push(['Poetry','What is a couplet?',['Two rhyming lines in a row','A 14-line poem','A four-line stanza','A line with no rhyme'],0,'Shakespeare often ended scenes with couplets.']);
+Q.English.H.push(['Literature','Who wrote Of Mice and Men?',['John Steinbeck','F. Scott Fitzgerald','Harper Lee','Ernest Hemingway'],0,'Steinbeck published it in 1937.']);
+Q.English.A.push(['Literature','Which novel opens with a line about “a truth universally acknowledged”?',['Pride and Prejudice','Emma','Jane Eyre','Middlemarch'],0,'Jane Austen opens Pride and Prejudice with it.']);
+
+
+/* Batch 5 */
+Q.Maths.KS3.push(['Fractions','What is 2/5 as a decimal?',['0.4','0.25','2.5','0.52'],0,'2 ÷ 5 = 0.4.'],['Algebra','What is the value of 3a + 2 when a = 4?',['14','12','9','24'],0,'3 × 4 + 2 = 14.'],['Area','What is the area of a rectangle 9 cm by 3 cm?',['27 cm²','12 cm²','24 cm²','36 cm²'],0,'Length × width = 27 cm².']);
+Q.Maths.GCSE.push(['Percentages','What is 20% of 150?',['30','20','15','50'],0,'10% is 15, so 20% is 30.'],['Angles','What do angles on a straight line add up to?',['180°','90°','360°','270°'],0,'Angles on a straight line sum to 180°.'],['Fractions','What is 3/4 × 2/3?',['1/2','5/7','6/7','2/3'],0,'6/12 simplifies to 1/2.']);
+Q.Maths.H.push(['Trigonometry','What is the exact value of sin 30°?',['1/2','√3/2','1','√2/2'],0,'sin 30° = 1/2.'],['Rearranging','Make x the subject of y = 3x + 2.',['x = (y − 2)/3','x = 3(y − 2)','x = (y + 2)/3','x = y − 2/3'],0,'Subtract 2, then divide by 3.'],['Statistics','What does the interquartile range measure?',['The spread of the middle 50% of the data','The average','The highest value','The most common value'],0,'IQR = upper quartile − lower quartile.']);
+Q.Maths.A.push(['Differentiation','What is the derivative of sin x?',['cos x','−cos x','−sin x','tan x'],0,'d/dx (sin x) = cos x.'],['Logarithms','Simplify log a + log b.',['log(ab)','log(a + b)','log a × log b','log(a/b)'],0,'Adding logs multiplies the numbers.'],['Statistics','What is the mean of the standard normal distribution?',['0','1','0.5','−1'],0,'It has mean 0 and standard deviation 1.']);
+Q.Biology.KS3.push(['Plants','Which part of a plant absorbs water from the soil?',['Roots','Leaves','Flowers','Stem'],0,'Root hair cells absorb water.'],['Digestion','Where is most digested food absorbed into the blood?',['Small intestine','Stomach','Large intestine','Mouth'],0,'The small intestine absorbs nutrients.'],['Cells','Which structure is found in plant cells but not animal cells?',['Cell wall','Nucleus','Mitochondria','Cell membrane'],0,'Plant cells also have chloroplasts.']);
+Q.Biology.GCSE.push(['Health','Which type of disease is caused by pathogens?',['Communicable','Genetic','Deficiency','Cancer'],0,'Pathogens spread from person to person.'],['Plants','What is transpiration?',['Loss of water vapour from leaves','Absorption of water by roots','Making glucose','Release of oxygen'],0,'Water evaporates mainly through the stomata.'],['Reproduction','What are sex cells called?',['Gametes','Zygotes','Spores','Stem cells'],0,'Sperm and egg cells are gametes.']);
+Q.Biology.H.push(['Antibiotics','Why do antibiotics not work on viruses?',['Viruses live inside host cells','Viruses are too big','Viruses make antibodies','Viruses are plants'],0,'Antibiotics target bacteria, not viruses.'],['Genetics','What is selective breeding?',['Choosing parents with desired traits to breed','Changing genes in a lab','Cloning animals','Natural selection'],0,'Humans choose which organisms reproduce.'],['Homeostasis','What detects a change in the body’s internal environment?',['Receptors','Effectors','Enzymes','Hormones only'],0,'Receptors send signals to the coordination centre.']);
+Q.Biology.A.push(['Cell division','During which stage of mitosis do the chromatids separate?',['Anaphase','Prophase','Metaphase','Telophase'],0,'Spindle fibres pull the chromatids apart.'],['DNA replication','Which enzyme joins nucleotides during DNA replication?',['DNA polymerase','Helicase','Ligase','RNA polymerase'],0,'DNA polymerase builds the new strand.'],['Evolution','What is genetic drift?',['Random change in allele frequency','Selection by predators','Movement of alleles between populations','Mutation caused by radiation'],0,'It has the biggest effect in small populations.']);
+Q.Chemistry.KS3.push(['Particles','What is a solid turning straight into a gas called?',['Sublimation','Melting','Condensation','Freezing'],0,'Dry ice does this.'],['Combustion','What is made when a fuel burns completely in oxygen?',['Carbon dioxide and water','Hydrogen only','Carbon monoxide','Soot'],0,'Hydrocarbons make CO₂ and H₂O.'],['Periodic table','What are the elements in Group 0 called?',['Noble gases','Halogens','Alkali metals','Transition metals'],0,'Noble gases are unreactive.']);
+Q.Chemistry.GCSE.push(['Bonding','Which type of bond forms between non-metal atoms?',['Covalent','Ionic','Metallic','Hydrogen'],0,'The atoms share electrons.'],['Halogens','Which halogen is a liquid at room temperature?',['Bromine','Chlorine','Fluorine','Iodine'],0,'Chlorine and fluorine are gases, and iodine is a solid.'],['Water','Which process makes drinking water from sea water?',['Distillation','Filtration only','Chromatography','Sieving'],0,'The water is evaporated and then condensed.']);
+Q.Chemistry.H.push(['Equations','Which is the balanced equation for hydrogen burning in oxygen?',['2H₂ + O₂ → 2H₂O','H₂ + O₂ → H₂O','H₂ + O → H₂O','2H₂ + 2O₂ → 2H₂O'],0,'There must be equal atoms of each element on both sides.'],['Formulae','What is the formula of magnesium chloride?',['MgCl₂','MgCl','Mg₂Cl','Mg₂Cl₂'],0,'Mg²⁺ needs two Cl⁻ ions.'],['Gases','What volume does 1 mole of any gas occupy at room temperature and pressure?',['24 dm³','22.4 dm³','12 dm³','1 dm³'],0,'At RTP the molar volume is 24 dm³.']);
+Q.Chemistry.A.push(['Entropy','What does ΔS measure?',['The change in entropy (disorder)','The change in enthalpy','The change in pressure','The change in rate'],0,'Entropy is a measure of disorder.'],['Organic chemistry','What does a primary alcohol form when fully oxidised?',['A carboxylic acid','A ketone','An alkene','An ester'],0,'Primary alcohol → aldehyde → carboxylic acid.'],['Transition metals','Which property is typical of transition metal compounds?',['They are often coloured','They are always white','They have low melting points','They never change oxidation state'],0,'Their d electrons absorb visible light.']);
+Q.Physics.KS3.push(['Forces','Which force slows moving objects in contact with surfaces?',['Friction','Gravity','Magnetism','Upthrust'],0,'Friction opposes motion.'],['Circuits','What is a material that does not let current flow easily called?',['Insulator','Conductor','Cell','Switch'],0,'Plastic is an insulator.'],['Energy','What is the unit of energy?',['Joule','Newton','Watt','Pascal'],0,'Energy is measured in joules.']);
+Q.Physics.GCSE.push(['Forces','How is weight calculated?',['Mass × gravitational field strength','Mass ÷ gravity','Mass + gravity','Mass × speed'],0,'W = mg.'],['Electricity','What is the approximate UK mains voltage?',['230 V','110 V','12 V','50 V'],0,'UK mains is about 230 V AC.'],['Particles','What happens to gas particles when the gas is heated?',['They move faster','They stop moving','They get bigger','They move closer together'],0,'Their kinetic energy increases.']);
+Q.Physics.H.push(['Transformers','What does a step-up transformer do?',['Increases the voltage','Decreases the voltage','Changes AC to DC','Increases the current'],0,'It has more turns on the secondary coil.'],['Motion','What does the gradient of a distance-time graph show?',['Speed','Acceleration','Distance','Time'],0,'A steeper line means faster movement.'],['Space','What is a light-year a unit of?',['Distance','Time','Speed','Brightness'],0,'It is the distance light travels in one year.']);
+Q.Physics.A.push(['Waves','What is diffraction?',['Waves spreading out as they pass through a gap','Waves bouncing off a surface','Waves changing speed','Waves cancelling out'],0,'It is most noticeable when the gap is similar to the wavelength.'],['Thermal physics','What is specific heat capacity?',['The energy needed to raise 1 kg by 1 K','The total heat in an object','The temperature of a substance','The energy to melt 1 kg'],0,'It is measured in J kg⁻¹ K⁻¹.'],['Gravitational fields','What does a field strength of 9.8 N/kg mean?',['Each kilogram feels a force of 9.8 N','Every object has a mass of 9.8 kg','Objects weigh 9.8 kg','Gravity is 98 N'],0,'It is the force per unit mass.']);
+Q.History.KS3.push(['Normans','What type of building did the Normans build to control England?',['Castles','Pyramids','Skyscrapers','Aqueducts'],0,'Motte-and-bailey castles spread across the country.'],['Slavery','In which year did Britain abolish the slave trade?',['1807','1707','1907','1850'],0,'The Slave Trade Act was passed in 1807.'],['Ancient Egypt','What did the ancient Egyptians build as tombs for pharaohs?',['Pyramids','Colosseums','Ziggurats','Aqueducts'],0,'Pyramids were built to protect pharaohs in the afterlife.']);
+Q.History.GCSE.push(['World War One','What event triggered the start of World War One?',['The assassination of Archduke Franz Ferdinand','The sinking of the Lusitania','The Russian Revolution','The Treaty of Versailles'],0,'He was assassinated in Sarajevo in 1914.'],['Medicine','Who developed the smallpox vaccine?',['Edward Jenner','Louis Pasteur','Alexander Fleming','Joseph Lister'],0,'Jenner used cowpox in 1796.'],['Elizabethan England','Which ship did Francis Drake sail around the world in?',['The Golden Hind','The Mary Rose','The Victory','The Mayflower'],0,'He sailed it between 1577 and 1580.']);
+Q.History.H.push(['Weimar Germany','Which 1924 plan helped Germany recover economically?',['The Dawes Plan','The Young Plan','The Schlieffen Plan','The Marshall Plan'],0,'American loans helped rebuild German industry.'],['Cold War','What was the Berlin Airlift of 1948–49?',['Supplying West Berlin by air during the blockade','A Soviet invasion','A US bombing campaign','An escape route'],0,'Allied planes flew in food and fuel for months.'],['Civil rights','What did Rosa Parks do in 1955?',['Refused to give up her bus seat','Led the March on Washington','Founded the NAACP','Wrote the Constitution'],0,'It sparked the Montgomery Bus Boycott.']);
+Q.History.A.push(['Tudors','What was the Pilgrimage of Grace of 1536?',['A northern rebellion against Henry VIII’s religious changes','A Spanish invasion','A revolt over taxes in Kent','A royal tour'],0,'Henry VIII crushed it.'],['Cold War','What was détente?',['A relaxing of tensions between the superpowers','A nuclear arms race','A Soviet invasion','A trade embargo'],0,'It took place mainly in the 1970s.'],['Victorian Britain','What was the 1832 Great Reform Act known for?',['Giving more men the vote and removing rotten boroughs','Giving women the vote','Abolishing slavery','Introducing income tax'],0,'It extended the vote to some middle-class men.']);
+Q.Geography.KS3.push(['Settlements','What is a settlement?',['A place where people live','A type of river','A mountain range','A weather front'],0,'Towns and villages are settlements.'],['Atmosphere','What is the layer of gases around the Earth called?',['Atmosphere','Lithosphere','Hydrosphere','Biosphere'],0,'The atmosphere protects life on Earth.'],['Oceans','Which is the largest ocean?',['Pacific','Atlantic','Indian','Arctic'],0,'The Pacific covers about a third of the Earth’s surface.']);
+Q.Geography.GCSE.push(['Rivers','What is a confluence?',['Where two rivers meet','The start of a river','A waterfall','A lake'],0,'The smaller river is called a tributary.'],['Urban','What does urbanisation mean?',['Growth in the share of people living in towns and cities','People moving to the countryside','The decline of cities','Growth of villages'],0,'It is happening rapidly in many lower-income countries.'],['Weather','Which instrument measures air pressure?',['Barometer','Anemometer','Hygrometer','Rain gauge'],0,'A barometer measures pressure.']);
+Q.Geography.H.push(['Glaciation','What is a corrie (cirque)?',['An armchair-shaped hollow carved by ice','A river valley','A coastal cliff','A sand dune'],0,'Glaciers erode it near a mountain top.'],['Economy','What is the primary sector of the economy?',['Extracting raw materials','Manufacturing','Services','Research'],0,'Farming and mining are primary activities.'],['Tropical storms','Which part of a tropical storm has the strongest winds?',['The eyewall','The eye','The outer band','The centre'],0,'The eye itself is calm.']);
+Q.Geography.A.push(['Coasts','What is eustatic sea level change?',['A global change in sea level','A local rise in the land','A change caused by tides','Erosion of cliffs'],0,'It is caused by changes in ocean water volume.'],['Population','What is the total fertility rate?',['The average number of children per woman','Births per 1,000 people','Deaths per 1,000 people','The annual growth rate'],0,'Replacement level is about 2.1.'],['Economy','What does GDP stand for?',['Gross Domestic Product','General Development Plan','Global Development Product','Gross Daily Production'],0,'It measures the value of a country’s output.']);
+Q.English.KS3.push(['Writing','What is the purpose of a conclusion?',['To sum up the main points','To introduce the topic','To give a title','To list sources'],0,'It finishes the piece.'],['Grammar','What is a pronoun?',['A word that replaces a noun','A describing word','A doing word','A joining word'],0,'For example, “he” and “they”.'],['Poetry','What is a haiku?',['A short poem with 5-7-5 syllables','A 14-line poem','A rhyming couplet','A long story poem'],0,'The form comes from Japan.']);
+Q.English.GCSE.push(['Techniques','What is imagery?',['Language that creates pictures in the mind','A list of facts','A repeated line','A type of rhyme'],0,'It appeals to the senses.'],['Writing','What does tone mean in writing?',['The writer’s attitude','The length of a sentence','The title','The rhyme scheme'],0,'It shows how the writer feels.'],['Literature','In A Christmas Carol, who is Scrooge’s dead business partner?',['Jacob Marley','Bob Cratchit','Fred','Fezziwig'],0,'Marley’s ghost warns Scrooge.']);
+Q.English.H.push(['Structure','What is a cliffhanger?',['An ending that leaves the outcome uncertain','A summary','A final line of dialogue','A flashback'],0,'It keeps readers curious.'],['Language','What is a semantic field?',['A group of words linked by meaning','A type of sentence','A rhyme pattern','A story setting'],0,'For example, words about war.'],['Literature','Who wrote Romeo and Juliet?',['William Shakespeare','Christopher Marlowe','Ben Jonson','John Milton'],0,'It was written in the 1590s.']);
+Q.English.A.push(['Language','What does juxtaposition mean?',['Placing two contrasting things side by side','Repeating a word','Using slang','Describing a setting'],0,'It highlights differences.'],['Poetry','What is iambic pentameter?',['Ten syllables per line in an unstressed-stressed pattern','Eight syllables per line','A rhyming pair','Free verse'],0,'Shakespeare used it often.'],['Literature','Who wrote Wuthering Heights?',['Emily Brontë','Charlotte Brontë','Jane Austen','George Eliot'],0,'It was published in 1847.']);
+
+var $=function(i){return document.getElementById(i)};
+function esc(s){var d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML}
+function shuf(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function show(id){['setup','quiz','results'].forEach(function(x){$(x).classList.toggle('hide',x!==id)});$('home').classList.toggle('hide',id!=='setup');window.scrollTo(0,0)}
+var state={};
+
+var subs=Object.keys(Q);
+$('subj').innerHTML='<option value="*">All subjects (mixed)</option>'+subs.map(function(s){return '<option>'+s+'</option>'}).join('');
+
+function getPool(){return poolFor($('subj').value,$('lvl').value)}
+function poolFor(s,l){var pool=[];(s==='*'?subs:[s]).forEach(function(k){(l==='H'?Q[k].GCSE.concat(Q[k].H):Q[k][l]).forEach(function(q){pool.push({subj:k,topic:q[0],q:q[1],opts:q[2],ans:q[2][q[3]],e:q[4]})})});return pool}
+function info(){var c=getPool().length,n=parseInt($('n').value,10);$('info').textContent=c+' questions available'+(c<n?'. Your quiz will have '+c+'.':'.')}
+['subj','lvl','n'].forEach(function(i){$(i).onchange=info});info();
+function seenGet(){try{return JSON.parse(localStorage.getItem('reviseit_seen')||'{}')}catch(e){return{}}}
+function seenSet(o){try{localStorage.setItem('reviseit_seen',JSON.stringify(o))}catch(e){}}
+/* Rotation: unseen questions first, then the cycle restarts once they have all been used */
+function pick(pool,n){
+  var seen=seenGet(),picked=shuf(pool.filter(function(q){return !seen[q.q]})).slice(0,n);
+  if(picked.length<n){
+    pool.forEach(function(q){delete seen[q.q]});
+    picked=picked.concat(shuf(pool.filter(function(q){return picked.indexOf(q)<0})).slice(0,n-picked.length));
+  }
+  picked.forEach(function(q){seen[q.q]=1});seenSet(seen);return picked;
+}
+$('go').onclick=function(){
+  var l=$('lvl').value,n=parseInt($('n').value,10);
+  var qs=pick(getPool(),n).map(function(q){q.opts=shuf(q.opts);return q});
+  startQuiz(qs,l,null);
+};
+
+function renderQ(){
+  var q=state.qs[state.i],t=state.qs.length,h='';
+  h+='<div class="bar"><i style="width:'+(state.i/t*100)+'%"></i></div>';
+  h+='<span class="tag">Question '+(state.i+1)+' of '+t+' · '+esc(q.subj)+' · '+esc(q.topic)+'</span><h2>'+esc(q.q)+'</h2>';
+  q.opts.forEach(function(o,k){h+='<button class="opt" data-k="'+k+'">'+esc(o)+'</button>'});
+  h+='<button id="next" disabled>'+(state.i===t-1?'Finish and mark':'Next')+'</button>';
+  $('quiz').innerHTML=h;
+  setTimeout(function(){var b=document.querySelector('.bar i');if(b)b.style.width=((state.i+1)/t*100)+'%'},40);
+  var cur=null,next=$('next');
+  Array.prototype.forEach.call(document.querySelectorAll('.opt'),function(b){
+    b.onclick=function(){
+      Array.prototype.forEach.call(document.querySelectorAll('.opt'),function(x){x.classList.remove('sel')});
+      b.classList.add('sel');cur=q.opts[+b.dataset.k];next.disabled=false;
+    };
+  });
+  next.onclick=function(){state.ans[state.i]=cur;state.i++;if(state.i<t)renderQ();else results()};
+}
+
+function results(){
+  var score=0,t=state.qs.length,rv='',cards=[],weak={};
+  state.qs.forEach(function(q,i){
+    var ok=state.ans[i]===q.ans;
+    if(ok)score++;else{weak[q.subj+' – '+q.topic]=1;cards.push(q)}
+    rv+='<div class="card"><span class="tag">'+esc(q.subj)+' · '+esc(q.topic)+'</span><div><strong>'+esc(q.q)+'</strong></div>'+
+    '<p>Your answer: '+esc(state.ans[i])+'</p><p class="'+(ok?'ok':'bad')+'"><strong>'+(ok?'✓ Correct':'✗ Not quite')+'</strong></p>'+
+    (ok?'':'<p>Answer: '+esc(q.ans)+'</p>')+'<p class="sub" style="margin:0">'+esc(q.e)+'</p></div>';
+  });
+  $('summary').innerHTML='<div class="score">'+score+' / '+t+'</div><div>'+esc(({KS3:'KS3',GCSE:'GCSE Foundation',H:'GCSE Higher',A:'A-level'})[state.lvl])+' quiz</div>';
+  $('review').innerHTML='<h2 style="margin:6px 0 10px">Question review</h2>'+rv;
+  var keys=Object.keys(weak);
+  $('weak').innerHTML=keys.length?'<h2>What to revise</h2><ul>'+keys.map(function(k){return '<li>'+esc(k)+'</li>'}).join('')+'</ul>':'<h2>Great work!</h2><p>No weak topics this time. Try the other level or a different subject.</p>';
+  $('fcbox').classList.toggle('hide',!cards.length);
+  var g=cards.map(function(c){return '<div class="fc"><small>'+esc(c.subj)+' · '+esc(c.topic)+'</small><strong>'+esc(c.q)+'</strong><div class="back">'+esc(c.ans)+'. '+esc(c.e)+'</div></div>'}).join('');
+  $('fcgrid').innerHTML=g;$('printgrid').innerHTML=g;
+  award(score,t);show('results');
+}
+$('print').onclick=function(){$('printarea').classList.remove('hide');window.print();setTimeout(function(){$('printarea').classList.add('hide')},500)};
+$('again').onclick=function(){show('setup')};
+
+/* ---------- Profile, XP, streaks, tasks, reminders (saved in this browser only) ---------- */
+var AVS=['🦊','🐼','🐯','🦉','🐙','🦄','🚀','⚡','🎮','📚','🌟','🐉','🐱','🐶','🐸','🦁','🐧','🦋','🍕','⚽','🎸','🌈','🔥','🤖'];
+function startQuiz(qs,l,task){state={qs:qs.map(function(q){q.opts=shuf(q.opts);return q}),ans:[],i:0,lvl:l,task:task};renderQ();show('quiz')}
+function P(){try{var p=JSON.parse(localStorage.getItem('reviseit_profile')||'{}');return Object.assign({name:'',avatar:'🦊',xp:0,streak:0,best:0,last:'',tasks:{},remind:'',pinged:''},p)}catch(e){return {name:'',avatar:'🦊',xp:0,streak:0,best:0,last:'',tasks:{},remind:'',pinged:''}}}
+function saveP(p){try{localStorage.setItem('reviseit_profile',JSON.stringify(p))}catch(e){}}
+function today(){return new Date().toLocaleDateString('en-CA')}
+function lvlOf(xp){return Math.floor(xp/100)+1}
+var LVN={KS3:'KS3',GCSE:'GCSE Foundation',H:'GCSE Higher',A:'A-level'};
+function dayN(){return Math.floor(Date.now()/864e5)}
+function challenge(){var d=dayN();return{s:subs[d%subs.length],l:['KS3','GCSE','H','A'][d%4]}}
+function renderHome(){
+  var p=P(),t=today(),y=new Date(Date.now()-864e5).toLocaleDateString('en-CA'),done=p.tasks[t]||{};
+  $('avatar').textContent=p.avatar;$('pname').textContent=p.name||'Student';
+  $('plevel').textContent='Level '+lvlOf(p.xp)+' · '+(p.xp%100)+'/100 XP';
+  $('pxp').style.width=(p.xp%100)+'%';
+  var live=p.last===t||p.last===y?p.streak:0;
+  $('pstreak').innerHTML='🔥 '+live+'<small>'+(p.last===t?'day streak':live?'study today!':'day streak')+'</small>';
+  var c=challenge(),T=[
+    ['qd','Question of the day','One random question',15],
+    ['q3','Quick 3','3 questions from your chosen subject and level',30],
+    ['ch','Daily challenge','8 questions: '+c.s+', '+LVN[c.l],60]];
+  $('tasks').innerHTML=T.map(function(x){return '<div class="task"><div><strong>'+x[1]+'</strong><small>'+x[2]+' · +'+x[3]+' XP</small></div><button data-t="'+x[0]+'"'+(done[x[0]]?' disabled>Done ✓':'>Start')+'</button></div>'}).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('#tasks button'),function(b){b.onclick=function(){runTask(b.dataset.t)}});
+  $('uname').value=p.name;$('rtime').value=p.remind;
+  $('avs').innerHTML=AVS.map(function(a){return '<button data-a="'+a+'"'+(a===p.avatar?' class="on"':'')+'>'+a+'</button>'}).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('#avs button'),function(b){b.onclick=function(){var q=P();q.avatar=b.dataset.a;saveP(q);renderHome()}});
+  var ok='Notification' in window;
+  $('remind').textContent=ok&&Notification.permission==='granted'&&p.remind?'Reminders on ✓ (tap to update)':'Turn on reminders';
+  $('rnote').textContent=ok?'Reminders only appear while this page is open in a tab. Real background notifications need a server.':'Your browser doesn’t support notifications.';
+}
+function runTask(k){
+  var s,l,n,pool,c=challenge();
+  if(k==='qd'){s=subs[Math.floor(Math.random()*subs.length)];l=['KS3','GCSE','H','A'][Math.floor(Math.random()*4)];n=1}
+  else if(k==='q3'){s=$('subj').value;l=$('lvl').value;n=3}
+  else{s=c.s;l=c.l;n=8}
+  pool=poolFor(s,l);startQuiz(pick(pool,n),l,k);
+}
+function award(score,t){
+  var p=P(),d=today(),y=new Date(Date.now()-864e5).toLocaleDateString('en-CA'),before=lvlOf(p.xp),gain=score*10,msg='';
+  if(p.last!==d){p.streak=p.last===y?p.streak+1:1;p.last=d}
+  p.best=Math.max(p.best,p.streak);
+  if(state.task){var b={qd:15,q3:30,ch:60}[state.task];p.tasks={};p.tasks[d]=P().tasks[d]||{};if(!p.tasks[d][state.task]){p.tasks[d][state.task]=1;gain+=b;msg=' (includes +'+b+' task bonus)'}}
+  p.xp+=gain;saveP(p);
+  var up=lvlOf(p.xp)>before;
+  $('summary').innerHTML+='<div class="xpmsg">+'+gain+' XP'+msg+' · 🔥 '+p.streak+' day streak'+(up?' · 🎉 Level up! You’re level '+lvlOf(p.xp):'')+'</div>';
+  renderHome();
+}
+function saveName(){var p=P();p.name=$('uname').value.trim().slice(0,16);saveP(p);renderHome()}
+$('uname').oninput=function(){$('pname').textContent=this.value.trim().slice(0,16)||'Student'};
+$('uname').onchange=saveName;
+$('usave').onclick=function(){saveName();$('usave').textContent='Saved ✓';setTimeout(function(){$('usave').textContent='Save username'},1500)};
+document.querySelector('.prof').onclick=function(){$('pdet').open=true;$('pdet').scrollIntoView({behavior:'smooth'})};
+document.querySelector('.prof').style.cursor='pointer';
+$('remind').onclick=function(){
+  var p=P();p.remind=$('rtime').value||'18:00';saveP(p);
+  if('Notification' in window&&Notification.permission!=='granted')Notification.requestPermission().then(renderHome);else renderHome();
+};
+setInterval(function(){
+  var p=P();if(!p.remind||!('Notification' in window)||Notification.permission!=='granted')return;
+  var n=new Date(),hm=('0'+n.getHours()).slice(-2)+':'+('0'+n.getMinutes()).slice(-2);
+  if(hm===p.remind&&p.last!==today()&&p.pinged!==today()){p.pinged=today();saveP(p);try{new Notification('ReviseIt',{body:'Time for a quick quiz. Keep your streak going!'})}catch(e){}}
+},30000);
+renderHome();
+
+</script>
+</body>
+</html>
